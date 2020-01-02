@@ -1,9 +1,14 @@
-
-import json
+from json import JSONEncoder
 import requests
 from bs4 import BeautifulSoup
+import string
 
 BASE_URL = "https://justjoin.it"
+
+
+def snake_to_camel(text):
+    text = string.capwords(text, '_').replace('_', '')
+    return text[0].lower() + text[1:]
 
 
 class Offer:
@@ -13,10 +18,11 @@ class Offer:
     job_title: str
     salary: str
 
-class OfferEncoder(json.JSONEncoder):
+
+class OfferEncoder(JSONEncoder):
     def default(self, o):
         if isinstance(o, Offer):
-            return o.__dict__
+            return {snake_to_camel(k): v for k, v in o.__dict__.items()}
 
         return super().default(self, o)
 
