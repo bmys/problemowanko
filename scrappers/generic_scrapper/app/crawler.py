@@ -12,8 +12,6 @@ def clean_text(text):
 def parse_offer(document_text: Text, info):
     base_soup: BeautifulSoup = BeautifulSoup(document_text, features="html.parser")
     offers = base_soup.find_all("li", {"class": "offer-item"})
-    print(offers)
-
     return (collect_offer_info(offer, info) for offer in offers)
 
 
