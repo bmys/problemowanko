@@ -1,5 +1,6 @@
 import asyncio
-
+from datetime import datetime
+import json
 from uuid import uuid1
 import socket
 
@@ -24,6 +25,9 @@ class Micron(Service):
         self.tasks = list()
         self.running = False
 
+    def __repr__(self):
+        return f'Micron[{str(self.id)[-8:]}]'
+
     async def get_connection(self) -> aio_pika.connection.ConnectionType:
         return await aio_pika.connect_robust(self.url)
 
@@ -42,15 +46,14 @@ class Micron(Service):
     async def main(self):
         @self.publisher('pool_queue')
         async def heart_beat():
+            info = {'id': str(self.id), 'ip': self.ip}
             while self.running:
+                info['datetime'] = str(datetime.now())
+                # print(json.dumps(info))
+                await self.publisher.publish('pool_queue', str(json.dumps(info)))
+                print('published')
                 await asyncio.sleep(10)
-                await self.publisher.publish('pool_queue', "HEARTH BEAT")
             return "KILLED"
-
-        @self.publisher('pool_queue')
-        async def send_beat():
-            await asyncio.sleep(1)
-            return 'I AM ALIVE'
 
         async with self.connection_pool, self.channel_pool:
             tasks = [self.loop.create_task(task()) for task in self.tasks]
@@ -58,7 +61,7 @@ class Micron(Service):
 
     def run(self):
         self.running = True
-        print(f'Micron[{str(self.id)[-8:]}] running...')
+        print(self, ' running...')
         loop = asyncio.get_event_loop()
         loop.create_task(self.main())
         try:

@@ -1,6 +1,9 @@
+from .micron import Micron
+micron = Micron()
+
 if __name__ == '__main__':
     import asyncio
-    from micron.micron import Micron
+    from .micron import Micron
     mc = Micron()
 
     @mc.consumer('pool_queue')
