@@ -44,6 +44,11 @@ class Micron(Service):
         return Pool(self.get_channel, max_size=10, loop=self.loop)
 
     async def main(self):
+        @self.consumer(self.id, auto_delete=True)
+        def manage(msg):
+            if msg == 'KILL':
+                self.running = False
+
         @self.publisher('pool_queue')
         async def heart_beat():
             info = {'id': self.id, 'ip': self.ip}
