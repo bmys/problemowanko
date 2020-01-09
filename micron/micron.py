@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 import json
+from enum import Enum
 from uuid import uuid1
 import socket
 
@@ -12,8 +13,11 @@ from .service import Service
 from micron import decorators
 
 
-class Micron(Service):
+class ManageMessage(Enum):
+    KILL = 'KILL'
 
+
+class Micron(Service):
     def __init__(self, url="amqp://guest:guest@localhost/"):
         self.id = str(uuid1())
         self.ip = socket.gethostbyname(socket.gethostname())
@@ -46,7 +50,7 @@ class Micron(Service):
     async def main(self):
         @self.consumer(self.id, auto_delete=True)
         def manage(msg):
-            if msg == 'KILL':
+            if msg == ManageMessage.KILL.value:
                 self.running = False
 
         @self.publisher('pool_queue')
