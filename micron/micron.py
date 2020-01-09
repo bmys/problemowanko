@@ -15,7 +15,7 @@ from micron import decorators
 class Micron(Service):
 
     def __init__(self, url="amqp://guest:guest@localhost/"):
-        self.id = uuid1()
+        self.id = str(uuid1())
         self.ip = socket.gethostbyname(socket.gethostname())
         self.url = url
 
@@ -46,13 +46,11 @@ class Micron(Service):
     async def main(self):
         @self.publisher('pool_queue')
         async def heart_beat():
-            info = {'id': str(self.id), 'ip': self.ip}
+            info = {'id': self.id, 'ip': self.ip}
             while self.running:
                 info['datetime'] = str(datetime.now())
-                # print(json.dumps(info))
-                await self.publisher.publish('pool_queue', str(json.dumps(info)))
-                print('published')
-                await asyncio.sleep(10)
+                await self.publisher.publish('pool_queue', json.dumps(info))
+                await asyncio.sleep(15)
             return "KILLED"
 
         async with self.connection_pool, self.channel_pool:
