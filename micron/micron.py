@@ -18,6 +18,7 @@ class ManageMessage(Enum):
 
 
 class Micron(Service):
+
     def __init__(self, url="amqp://guest:guest@localhost/"):
         self.id = str(uuid1())
         self.ip = socket.gethostbyname(socket.gethostname())
@@ -27,7 +28,7 @@ class Micron(Service):
         self.publisher = decorators.Publisher(self)
         self.consumer = decorators.Consumer(self)
         self.tasks = list()
-        self.running = False
+        self._running = False
 
     def __repr__(self):
         return f'Micron[{str(self.id)[-8:]}]'
@@ -39,6 +40,14 @@ class Micron(Service):
         async with self.connection_pool.acquire() as connection:
             return await connection.channel()
 
+    @property
+    def running(self):
+        return self._running
+
+    @running.setter
+    def running(self, is_running):
+        self._running = is_running
+
     @cached_property
     def connection_pool(self):
         return Pool(self.get_connection, max_size=2, loop=self.loop)
@@ -49,7 +58,7 @@ class Micron(Service):
 
     async def main(self):
         @self.consumer(self.id, auto_delete=True)
-        def manage(msg):
+        async def manage(msg):
             if msg == ManageMessage.KILL.value:
                 self.running = False
 
@@ -70,9 +79,8 @@ class Micron(Service):
         self.running = True
         print(self, ' running...')
         loop = asyncio.get_event_loop()
-        loop.create_task(self.main())
         try:
-            loop.run_forever()
+            loop.run_until_complete(self.main())
         except KeyboardInterrupt:
             self.running = False
         finally:

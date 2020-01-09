@@ -19,6 +19,10 @@ class Consumer:
 
                     async with queue.iterator() as queue_iter:
                         async for message in queue_iter:
+
+                            if not self.service.running:
+                                break
+
                             msg = message.body.decode('utf-8')
                             await func(msg, *args, **kwargs)
                             await message.ack()
