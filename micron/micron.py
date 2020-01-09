@@ -65,7 +65,7 @@ class Micron(Service):
         try:
             loop.run_forever()
         except KeyboardInterrupt:
-            ...
+            self.running = False
         finally:
             loop.close()
 
